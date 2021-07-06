@@ -16,10 +16,10 @@ namespace Cilsil.Cil.Parsers
     internal abstract class ExceptionParser : InstructionParser
     {
         /// <summary>
-        /// Abstract method for creating exception handling block.
+        /// Abstract method for creating exception handling block content nodes.
         /// </summary>
         /// <param name="state">Current program state.</param>
-        /// <returns><c>true</c> if the exception door node was translated successfully, <c>false</c> 
+        /// <returns><c>true</c> if the exception block is translated successfully, <c>false</c> 
         /// otherwise.</returns>
         protected abstract bool TranslateBlock(ProgramState state);
 
@@ -78,7 +78,7 @@ namespace Cilsil.Cil.Parsers
         }
 
         /// <summary>
-        /// Creates a unwrap exception call door node.
+        /// Creates a unwrap exception call invoked by exception block door node.
         /// </summary>
         /// <param name="state">Current program state.</param>
         /// <param name="exceptionExpression">The exception expression.</param>
