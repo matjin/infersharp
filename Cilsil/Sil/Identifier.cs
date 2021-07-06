@@ -25,6 +25,23 @@ namespace Cilsil.Sil
         /// </summary>
         public const string ReturnIdentifier = "return";
 
+        private static long NextCatchVarId => _NextCatchVarId++;
+
+        private static long _NextCatchVarId = 0;
+
+        /// <summary>
+        /// String for identifying catch variables.
+        /// </summary>
+        public static string CatchIdentifier() 
+        {
+            return $"CatchVar{NextCatchVarId}";
+        }
+
+        ///<summary>
+        /// String for identifying byte code variables. Used in try-with-resource.
+        /// </summary>
+        public const string ByteCodeIdentifier = "bcvar";
+
         /// <summary>
         /// String used to denote the possessing object for an instance field or method.
         /// </summary>
