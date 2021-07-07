@@ -21,14 +21,13 @@ namespace Cilsil.Cil.Parsers
         /// <param name="state">Current program state.</param>
         /// <returns><c>true</c> if the exception block is translated successfully, <c>false</c> 
         /// otherwise.</returns>
-        protected abstract bool TranslateBlock(ProgramState state);
+        public abstract bool TranslateBlock(ProgramState state);
 
         /// <summary>
         /// Abstract method for creating exception handling block door node.
         /// </summary>
         /// <param name="state">Current program state.</param>
-        /// <returns>The created exception door node.</returns>
-        protected CfgNode CreateExceptionDoor(ProgramState state)
+        public static CfgNode CreateExceptionDoor(ProgramState state)
         {
             /* Catch/Finally block exception door node looks like this
             
@@ -65,15 +64,12 @@ namespace Cilsil.Cil.Parsers
             // Construct an instruction to unwrap exception from returned variable.
             // Example: n${i}=_fun___unwrap_exception(n${i-1}:last var type*)
             var exceptionExpression = new VarExpression(identifier);
-            var exceptionCall = CreateUnwrapExceptionCall(state,
+            var exceptionCall = ExceptionParser.CreateUnwrapExceptionCall(state,
                                                           exceptionExpression,
                                                           returnType);
             doorNode.Instructions.Add(exceptionCall);
             state.Cfg.RegisterNode(doorNode);
 
-            // Translate corresponding block nodes.
-            TranslateBlock(state);
-            
             return doorNode;
         }
 
@@ -84,7 +80,7 @@ namespace Cilsil.Cil.Parsers
         /// <param name="exceptionExpression">The exception expression.</param>
         /// <param name="exceptionExpressionType">The type of excepted expression.</param>
         /// <returns>The unwrap exception Call SIL instruction.</returns>
-        private Call CreateUnwrapExceptionCall(ProgramState state,
+        private static Call CreateUnwrapExceptionCall(ProgramState state,
                                                Expression exceptionExpression,
                                                Typ exceptionExpressionType)
         {
@@ -115,26 +111,32 @@ namespace Cilsil.Cil.Parsers
         /// <param name="state">Current program state.</param>
         /// <param name="catchVariable">Created catch variable.</param>
         /// <returns>The created atrium node.</returns>
-        protected CfgNode CreateAttriumNode(ProgramState state, LvarExpression catchVariable)
+        protected virtual CfgNode CreateAttriumNode(ProgramState state, LvarExpression catchVariable)
         {
-            /* Load caught exception variable. For example:
+            /* Load caught exception variable. 
+            For example in catch block:
             
             node 4: Preds:2 Succs:6 EXN: 
             n$25=*&CatchVar65:java.lang.Object*;
-            *&e:java.lang.Object*=n$25;*/
-            var attriumNode = new StatementNode(location: state.CurrentLocation,
+            *&e:java.lang.Object*=n$25;
+            
+            In finally block:
+            node 26: Preds:29, 35, 41, 43, 45 Succs:27 EXN: 46
+            n$27=*&CatchVar77:java.lang.Object*;
+            *&$bcvar6:java.lang.Object*=n$27;
+            */
+
+            var atriumNode = new StatementNode(location: state.CurrentLocation,
                                             kind: StatementNode.StatementNodeKind.ExceptionHandler,
                                             proc: state.ProcDesc);
             var fieldType = new Tstruct("System.Object");
             var fieldIdentifier = state.GetIdentifier(Identifier.IdentKind.Normal);
-            attriumNode.Instructions.Add(new Load(fieldIdentifier,
+            atriumNode.Instructions.Add(new Load(fieldIdentifier,
                                                   catchVariable,
                                                   fieldType,
                                                   state.CurrentLocation));
-            
-            RegisterNode(state, attriumNode);
 
-            return attriumNode;
+            return atriumNode;
         }
     }
 }
