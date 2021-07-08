@@ -69,6 +69,7 @@ namespace Cilsil.Cil.Parsers
                                                           returnType);
             doorNode.Instructions.Add(exceptionCall);
             state.Cfg.RegisterNode(doorNode);
+            state.PreviousNode = doorNode;
 
             return doorNode;
         }
@@ -106,16 +107,15 @@ namespace Cilsil.Cil.Parsers
         }
 
         /// <summary>
-        /// Creates atrium node for catch/finally block.
+        /// Creates atrium node for catch/finally block. CreateAtriumNode method in super class only 
+        /// loads catch variable.
         /// </summary>
         /// <param name="state">Current program state.</param>
         /// <param name="catchVariable">Created catch variable.</param>
         /// <returns>The created atrium node.</returns>
-        protected virtual CfgNode CreateAttriumNode(ProgramState state, LvarExpression catchVariable)
+        protected virtual CfgNode CreateAtriumNode(ProgramState state, LvarExpression catchVariable)
         {
-            /* Load caught exception variable. 
-            For example in catch block:
-            
+            /* In catch block:
             node 4: Preds:2 Succs:6 EXN: 
             n$25=*&CatchVar65:java.lang.Object*;
             *&e:java.lang.Object*=n$25;
@@ -127,16 +127,40 @@ namespace Cilsil.Cil.Parsers
             */
 
             var atriumNode = new StatementNode(location: state.CurrentLocation,
-                                            kind: StatementNode.StatementNodeKind.ExceptionHandler,
-                                            proc: state.ProcDesc);
+                                               kind: StatementNode.StatementNodeKind.ExceptionHandler,
+                                               proc: state.ProcDesc);
             var fieldType = new Tstruct("System.Object");
             var fieldIdentifier = state.GetIdentifier(Identifier.IdentKind.Normal);
             atriumNode.Instructions.Add(new Load(fieldIdentifier,
-                                                  catchVariable,
-                                                  fieldType,
-                                                  state.CurrentLocation));
+                                                 catchVariable,
+                                                 fieldType,
+                                                 state.CurrentLocation));
+            RegisterNode(state, atriumNode);
 
             return atriumNode;
+        }
+        
+        /// <summary>
+        /// Set predecessors of nodes in exception handling blocks.
+        /// </summary>
+        /// <param name="doorNode">Exception block door node.</param>
+        public static void SetExceptionNodePredecessors(CfgNode doorNode)
+        {
+            var done = new HashSet<CfgNode>();
+            var todo = new Queue<CfgNode>();
+            todo.Enqueue(doorNode);
+            while (todo.Count > 0)
+            {
+                var n = todo.Dequeue();
+                if (done.Add(n))
+                {
+                    foreach (var s in n.Successors)
+                    {
+                        s.Predecessors.Add(n);
+                        todo.Enqueue(s);
+                    }
+                }
+            }
         }
     }
 }
