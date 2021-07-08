@@ -17,6 +17,11 @@ namespace Cilsil.Test.Assets
         public enum TestClassState { None, Uninitialized, Null, Initialized };
 
         /// <summary>
+        /// The various kinds of exception handling blocks that appear in the tests.
+        /// </summary>
+        public enum BlockKind { None, TryFinally };
+
+        /// <summary>
         /// The various variable names used in the tests.
         /// </summary>
         public enum VarName
@@ -251,6 +256,62 @@ namespace Cilsil.Test.Assets
             {
                 output += Declare(secondLocalVarType, VarName.SecondLocal) +
                           Assign(VarName.SecondLocal, secondLocalVarValue);
+            }
+
+            return output;
+        }
+
+        /// Generates a string representation of exception handling block code.
+        /// </summary>
+        /// <param name="resourceLocalVarType">The type of the local resource variable used in the 
+        /// test case.</param>
+        /// <param name="resourceLocalVarValue">The string representation of the value to be 
+        /// assigned to the local resource variable.</param>
+        /// <param name="disposeResource">The string representation of disposing the instantiated 
+        /// local resource.</param>
+        /// <param name="blockKind">The kind of the exception handling block used in the test case; 
+        /// for example, try-catch-finally or using.</param>
+        /// <returns>String representing the set of statements in the exception handling 
+        /// block.</returns>
+        public static string InitBlock(VarType resourceLocalVarType = VarType.None,
+                                       string resourceLocalVarValue = null,
+                                       string disposeResource = null,
+                                       BlockKind blockKind = BlockKind.None)
+        {
+            string output;
+            var resourceInit = Declare(resourceLocalVarType, VarName.FirstLocal);
+            switch (blockKind)
+            {
+                case BlockKind.None:
+                    output = string.Empty;
+                    break;
+                case BlockKind.TryFinally:
+                    if (resourceLocalVarType != VarType.None)
+                    {
+                        resourceInit += Assign(VarName.FirstLocal, "null");
+                    }
+                    if (disposeResource == null)
+                    {
+                        disposeResource = "";
+                    }
+                    var tryBlockCode =
+                        resourceLocalVarValue == null ? string.Empty
+                                                      : Assign(VarName.FirstLocal,
+                                                               resourceLocalVarValue);
+                    output =
+                        $@"{resourceInit}
+                        try
+                        {{
+                            {tryBlockCode}
+                        }}
+                        finally
+                        {{
+                            {disposeResource}
+                        }}";
+                    break;
+                default:
+                    throw new NotImplementedException("Unhandled BlockState");
+
             }
 
             return output;

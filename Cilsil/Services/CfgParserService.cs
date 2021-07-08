@@ -131,7 +131,10 @@ namespace Cilsil.Services
                 // Sets exception sink node as default exception node for all nodes in the graph.
                 foreach (var node in programState.ProcDesc.Nodes)
                 {
-                    node.ExceptionNodes.Add(programState.ProcDesc.ExceptionSinkNode);
+                    if (node.ExceptionNodes.Count == 0)
+                    {
+                        node.ExceptionNodes.Add(programState.ProcDesc.ExceptionSinkNode);
+                    }
                 }
 
                 // Exception node for start and exception sink should be exit, exception node for exit 

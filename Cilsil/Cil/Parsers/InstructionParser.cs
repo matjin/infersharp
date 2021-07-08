@@ -76,15 +76,17 @@ namespace Cilsil.Cil.Parsers
         /// </summary>
         /// <param name="instruction"><see cref="Instruction"/> to be parsed.</param>
         /// <param name="state">Current program state.</param>
+        /// <param name="RememberNodeOffset"><c>true</c> if remembers node offset, <c>false</c> 
+        /// otherwise.</param>
         /// <returns><c>true</c> if instruction is successfully translated, <c>false</c> 
         /// otherwise.</returns>
-        public static bool ParseCilInstruction(Instruction instruction, ProgramState state)
+        public static bool ParseCilInstruction(Instruction instruction, ProgramState state, bool RememberNodeOffset = true)
         {
             var previousProgramStack = state.GetProgramStackCopy();
             foreach (var parser in Parsers)
             {
                 parser.PreviousProgramStack = previousProgramStack;
-                parser.RememberNodeOffset = true;
+                parser.RememberNodeOffset = RememberNodeOffset;
                 if (parser.ParseCilInstructionInternal(instruction, state))
                 {
                     return true;

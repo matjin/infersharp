@@ -77,6 +77,38 @@ namespace Examples
         }
 
         /// <summary>
+        /// Finally block resource usage example, leaks expected.
+        /// </summary>
+        public void ResourceLeakFinallyBad() {
+            StreamWriter stream = null;
+            try 
+            {
+                stream = new StreamWriter(File.Create("everwhat.txt"));
+            } 
+            finally 
+            {
+                // FIXME: should close the stream by calling stream.Close().
+            }
+        }
+
+        /// <summary>
+        /// Finally block resource usage example, no leaks expected.
+        /// </summary>
+        public void ResourceLeakFinallyOk() {
+            StreamWriter stream = null;
+            try 
+            {
+                stream = new StreamWriter(File.Create("everwhat.txt"));
+            } 
+            finally 
+            {
+                stream.Close();
+                Console.WriteLine("Stream closed!");
+            }
+            Console.WriteLine("Done!");
+        }
+
+        /// <summary>
         /// Interprocedural close resource function.
         /// </summary>
         public void CleanUp(){

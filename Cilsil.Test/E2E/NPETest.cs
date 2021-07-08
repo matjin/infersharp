@@ -179,6 +179,33 @@ namespace Cilsil.Test.E2E
         }
 
         /// <summary>
+        /// Validates that a resource leak on a StreamReader initialized in exception handling block 
+        /// is identified.
+        /// </summary>
+        /// <param name="blockKind">The kind of exception handling block expected to wrap the resource.</param>
+        /// <param name="closeStream">If <c>true</c>, invokes the Close method; otherwise,
+        /// does not.</param>
+        /// <param name="expectedError">The kind of error expected to be reported by Infer.</param>
+        [DataRow(BlockKind.TryFinally, true, InferError.None)]
+        [DataRow(BlockKind.TryFinally, false, InferError.DOTNET_RESOURCE_LEAK)]
+        [DataTestMethod]
+        public void ResourceLeakExceptionHandling(BlockKind blockKind,
+                                                  bool closeStream,
+                                                  InferError expectedError)
+        {
+            TestRunManager.Run(InitBlock(resourceLocalVarType: VarType.StreamReader,
+                                resourceLocalVarValue: CallTestClassMethod(
+                                    TestClassMethod.ReturnInitializedStreamReader,
+                                    false),
+                                disposeResource: (closeStream ? CallMethod(
+                                                    VarName.FirstLocal,
+                                                    "Close")
+                                                : string.Empty),
+                                blockKind: blockKind),
+                               GetString(expectedError));
+        }
+
+        /// <summary>
         /// Validates that a dereference on a string variable initialized to null is identified.
         /// </summary>
         /// <param name="input">The string representing the value to assign.</param>

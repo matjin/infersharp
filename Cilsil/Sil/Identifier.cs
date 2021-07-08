@@ -37,6 +37,18 @@ namespace Cilsil.Sil
             return $"CatchVar{NextCatchVarId}";
         }
 
+        private static long NextByteCodeVarId => _NextByteCodeVarId++;
+
+        private static long _NextByteCodeVarId = 0;
+
+        /// <summary>
+        /// String for identifying byte code variables.
+        /// </summary>
+        public static string ByteCodeIdentifier()
+        {
+            return $"bcvar{NextByteCodeVarId}";
+        }
+
         /// <summary>
         /// String used to denote the possessing object for an instance field or method.
         /// </summary>
