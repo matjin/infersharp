@@ -94,10 +94,6 @@ namespace Cilsil.Cil.Parsers
             var callFlags = new Call.CallFlags(false, false, false);
             var returnVariable = state.GetIdentifier(Identifier.IdentKind.Normal);
 
-            if (returnType != state.Method.Module.TypeSystem.Object)
-            {
-                state.PushExpr(new VarExpression(returnVariable), Typ.FromTypeReference(returnType));
-            }
             return new Call(returnId: returnVariable,
                             returnType: Typ.FromTypeReference(returnType),
                             functionExpression: unwrapExceptionExpression,
@@ -125,7 +121,7 @@ namespace Cilsil.Cil.Parsers
             n$27=*&CatchVar77:java.lang.Object*;
             *&$bcvar6:java.lang.Object*=n$27;
             */
-
+            
             var atriumNode = new StatementNode(location: state.CurrentLocation,
                                                kind: StatementNode.StatementNodeKind.ExceptionHandler,
                                                proc: state.ProcDesc);
@@ -135,7 +131,7 @@ namespace Cilsil.Cil.Parsers
                                                  catchVariable,
                                                  fieldType,
                                                  state.CurrentLocation));
-            RegisterNode(state, atriumNode);
+            RegisterNode(state, atriumNode, true);
 
             return atriumNode;
         }
