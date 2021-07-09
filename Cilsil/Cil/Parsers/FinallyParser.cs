@@ -104,6 +104,8 @@ namespace Cilsil.Cil.Parsers
         /// Creates return exn node for finally block.
         /// </summary>
         /// <param name="state">Current program state.</param>
+        /// <param name="byteCodeVariable">Byte code variable.</param>
+        /// <param name="byteCodeVariableType">Byte code variable type.</param>
         /// <returns>The created return exn node.</returns>
         private CfgNode CreateReturnExnNode(ProgramState state, 
                                             Expression byteCodeVariable,
@@ -116,8 +118,10 @@ namespace Cilsil.Cil.Parsers
             Expression returnVariable = new LvarExpression(
                                             new LocalVariable(Identifier.ReturnIdentifier,
                                                               state.Method));
+            
             var variableInstruction = state.PushAndLoad(byteCodeVariable, byteCodeVariableType);
             retExnNode.Instructions.Add(variableInstruction);
+
             (var returnExnValue, _) = state.Pop();
             var retInstr = new Store(returnVariable,
                                      new ExnExpression(returnExnValue),
