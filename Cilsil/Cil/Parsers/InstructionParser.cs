@@ -102,11 +102,13 @@ namespace Cilsil.Cil.Parsers
         /// </summary>
         /// <param name="state">Current program state.</param>
         /// <param name="node">Node to register.</param>
-        protected void RegisterNode(ProgramState state, CfgNode node)
+        /// <param name="rememberNodeOffset"><c>true</c> if remembers node offset, <c>false</c> 
+        /// otherwise.</param>
+        protected void RegisterNode(ProgramState state, CfgNode node, bool rememberNodeOffset = false)
         {
             state.Cfg.RegisterNode(node);
             state.PreviousNode.Successors.Add(node);
-            if (RememberNodeOffset)
+            if (RememberNodeOffset || rememberNodeOffset)
             {
                 state.SaveNodeOffset(node, PreviousProgramStack);
                 RememberNodeOffset = false;

@@ -18,17 +18,17 @@ namespace Cilsil.Cil.Parsers
             switch (instruction.OpCode.Code)
             {
                 case Code.Ret:
-                    Store retInstr;
                     var retType = state.Method.ReturnType.GetElementType();
-                    var retNode = new StatementNode(state.CurrentLocation,
-                                                    StatementNode.StatementNodeKind.ReturnStmt,
-                                                    state.ProcDesc);
                     if (retType == state.Method.Module.TypeSystem.Void)
                     {
                         state.PreviousNode.Successors.Add(state.ProcDesc.ExitNode);
                     }
                     else
                     {
+                        Store retInstr;
+                        var retNode = new StatementNode(state.CurrentLocation,
+                                                        StatementNode.StatementNodeKind.ReturnStmt,
+                                                        state.ProcDesc);
                         (var returnValue, _) = state.Pop();
                         Expression returnVariable = new LvarExpression(
                             new LocalVariable(Identifier.ReturnIdentifier,

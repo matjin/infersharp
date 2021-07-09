@@ -7,6 +7,7 @@ using Cilsil.Sil.Instructions;
 using Cilsil.Sil.Types;
 using Cilsil.Utils;
 using Mono.Cecil.Cil;
+using System.Collections.Generic;
 
 namespace Cilsil.Cil.Parsers
 {
@@ -23,14 +24,18 @@ namespace Cilsil.Cil.Parsers
         
         public override bool TranslateBlock(ProgramState state)
         {
-            CfgNode atriumNode = null;
+            var doorNode = state.PreviousNode;
 
+            CfgNode atriumNode = null;
+            Expression byteCodeVariable = null;
+            Typ byteCodeVariableType = null;
             // Checks if there is a attrium node for the offset that we can reuse.
             (var attriumNodeAtOffset, var excessiveVisits) =
                 state.GetOffsetNode(state.CurrentInstruction.Offset);
             if (attriumNodeAtOffset != null)
             {
                 atriumNode = attriumNodeAtOffset;
+                return true;
             }
             else
             {
@@ -39,10 +44,14 @@ namespace Cilsil.Cil.Parsers
                 atriumNode = CreateAtriumNode(state, new LvarExpression(catchVariable));
 
                 // Connect attrium node to a new finally block door node as its exceptin sink node.
-                atriumNode.ExceptionNodes.Add(ExceptionParser.CreateExceptionDoor(state));
+                var atriumExceptionNode = ExceptionParser.CreateExceptionDoor(state);
+                (byteCodeVariable, byteCodeVariableType) = state.Pop();
+                atriumNode.ExceptionNodes.Add(atriumExceptionNode);
+                atriumExceptionNode.Successors.Add(atriumNode);
+                atriumNode.Predecessors.Add(atriumExceptionNode);
+
             }
-            var doorNode = state.PreviousNode;
-            state.PreviousNode.Successors.Add(atriumNode);
+            atriumNode.Predecessors.Add(doorNode);
 
             // translate the content of finally block.
             state.PushInstruction(state.CurrentInstruction.Next, atriumNode);      
@@ -61,7 +70,9 @@ namespace Cilsil.Cil.Parsers
                 }
             } while (state.HasInstruction);
 
-            ExceptionParser.SetExceptionNodePredecessors(doorNode);
+            CreateReturnExnNode(state, byteCodeVariable, byteCodeVariableType);
+
+            ExceptionParser.SetExceptionNodePredecessors(atriumNode);
 
             return true;              
         }
@@ -84,8 +95,39 @@ namespace Cilsil.Cil.Parsers
                                                   new VarExpression(fieldIdentifier),
                                                   byteCodeVariableType,
                                                   state.CurrentLocation));
+            state.PushExpr(byteCodeVariable, byteCodeVariableType);
 
             return atriumNode;
+        }
+
+        /// <summary>
+        /// Creates return exn node for finally block.
+        /// </summary>
+        /// <param name="state">Current program state.</param>
+        /// <returns>The created return exn node.</returns>
+        private CfgNode CreateReturnExnNode(ProgramState state, 
+                                            Expression byteCodeVariable,
+                                            Typ byteCodeVariableType)
+        {
+            var retType = state.Method.ReturnType.GetElementType();
+            var retExnNode = new StatementNode(state.CurrentLocation,
+                                               StatementNode.StatementNodeKind.ReturnStmt,
+                                               state.ProcDesc);
+            Expression returnVariable = new LvarExpression(
+                                            new LocalVariable(Identifier.ReturnIdentifier,
+                                                              state.Method));
+            var variableInstruction = state.PushAndLoad(byteCodeVariable, byteCodeVariableType);
+            retExnNode.Instructions.Add(variableInstruction);
+            (var returnExnValue, _) = state.Pop();
+            var retInstr = new Store(returnVariable,
+                                     new ExnExpression(returnExnValue),
+                                     Typ.FromTypeReference(retType),
+                                     state.CurrentLocation);
+            retExnNode.Instructions.Add(retInstr);
+            retExnNode.Successors = new List<CfgNode> { state.ProcDesc.ExitNode };
+            RegisterNode(state, retExnNode);
+            
+            return retExnNode;
         }
     }
 }
