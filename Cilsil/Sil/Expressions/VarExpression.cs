@@ -21,15 +21,18 @@ namespace Cilsil.Sil.Expressions
         /// </summary>
         public readonly bool FromThis;
 
+        public BinopExpression BinopExpression;
+
         /// <summary>
         /// Initializes a new instance of the <see cref="VarExpression"/> class.
         /// </summary>
         /// <param name="id">The identifier.</param>
         /// <param name="fromThis">If <c>true</c>, this variable references "this".</param>
-        public VarExpression(Identifier id, bool fromThis = false)
+        public VarExpression(Identifier id, bool fromThis = false, BinopExpression binopExpression = null)
         {
             Identifier = id;
             FromThis = fromThis;
+            BinopExpression = binopExpression;
         }
 
         /// <summary>

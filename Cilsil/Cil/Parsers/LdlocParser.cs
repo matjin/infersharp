@@ -76,6 +76,11 @@ namespace Cilsil.Cil.Parsers
                                                                variableType,
                                                                variableExpression));
             }
+            else if(state.VariableIndexToBinopExpression.ContainsKey(index)) 
+            {
+                state.PushExpr(state.VariableIndexToBinopExpression[index].Item1, 
+                               state.VariableIndexToBinopExpression[index].Item2);
+            }
             else
             {
                 // Loads the value at the heap location onto the stack.

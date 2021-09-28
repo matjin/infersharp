@@ -78,8 +78,17 @@ namespace Cilsil.Cil.Parsers
                 state.IndicesWithIsInstReturnType.Remove(index);
             }
 
+            LvarExpression variableExpression;
             var variable = new LocalVariable(LocalName(index), state.Method);
-            var storeValueIntoVariable = new Store(new LvarExpression(variable),
+
+            variableExpression = new LvarExpression(variable);
+
+            if (value is BinopExpression binopExpression)
+            {
+                state.VariableIndexToBinopExpression[index] = (binopExpression, type);
+            }
+
+            var storeValueIntoVariable = new Store(variableExpression,
                                                    value,
                                                    type,
                                                    state.CurrentLocation);

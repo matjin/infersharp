@@ -85,6 +85,9 @@ namespace Cilsil.Utils
         /// </summary>
         public Dictionary<int, BoxedValueType> VariableIndexToBoxedValueType { get; }
 
+        public Dictionary<int, (BinopExpression, Typ type)> VariableIndexToBinopExpression { get; }
+
+
         /// <summary>
         /// Tracks indices at which the expression stored is produced from the translation of the
         /// isinst instruction.
@@ -204,7 +207,7 @@ namespace Cilsil.Utils
             ExceptionHandlerSetToEntryNode = new Dictionary<ExceptionHandler, 
                                                             (CfgNode node, Identifier id)>();
             LeaveToExceptionEntryNode = new Dictionary<Instruction, (CfgNode, Identifier)>();
-
+            VariableIndexToBinopExpression = new Dictionary<int, (BinopExpression, Typ type)>();
             IndicesWithIsInstReturnType = new HashSet<int>();
             NextAvailableTemporaryVariableId = 0;
             NextAvailableSyntheticVariableId = 0;
