@@ -175,6 +175,12 @@ namespace Cilsil.Utils
         public MethodExceptionHandlers MethodExceptionHandlers;
 
         /// <summary>
+        /// <c>true</c> if the current translation of finally is exceptional; <c>false</c> 
+        /// otherwise. 
+        /// </summary>
+        public bool FinallyExceptionalTranslation;
+
+        /// <summary>
         /// Initializes a new instance of the <see cref="ProgramState"/> class.
         /// </summary>
         /// <param name="method">The method being translated.</param>
@@ -207,6 +213,8 @@ namespace Cilsil.Utils
             ExceptionHandlerSetToEntryNode = new Dictionary<ExceptionHandler, 
                                                             (CfgNode node, Identifier id)>();
             LeaveToExceptionEntryNode = new Dictionary<Instruction, (CfgNode, Identifier)>();
+            FinallyExceptionalTranslation = false;
+
             VariableIndexToBinopExpression = new Dictionary<int, (BinopExpression, Typ type)>();
             IndicesWithIsInstReturnType = new HashSet<int>();
             NextAvailableTemporaryVariableId = 0;
@@ -434,6 +442,8 @@ namespace Cilsil.Utils
                     PreviousNode = node ?? PreviousNode,
                     PreviousStack = ProgramStack.Clone(),
                     NextAvailableTemporaryVariableId = NextAvailableTemporaryVariableId,
+                    FinallyExceptionalTranslation = FinallyExceptionalTranslation,
+                    EndfinallyControlFlow = EndfinallyControlFlow,
                 });
         }
 
@@ -448,6 +458,8 @@ namespace Cilsil.Utils
             CurrentInstruction = snapshot.Instruction;
             ProgramStack = snapshot.PreviousStack;
             NextAvailableTemporaryVariableId = snapshot.NextAvailableTemporaryVariableId;
+            FinallyExceptionalTranslation = snapshot.FinallyExceptionalTranslation;
+            EndfinallyControlFlow = snapshot.EndfinallyControlFlow;
 
             var currentSequencePoint =
                 Method.DebugInformation.GetSequencePoint(CurrentInstruction);
@@ -500,6 +512,17 @@ namespace Cilsil.Utils
             /// The next available integer identifier for temporary variables at this state.
             /// </summary>
             public int NextAvailableTemporaryVariableId;
+
+            /// <summary>
+            /// <c>true</c> if translation of the finally block from the current state should be
+            /// exceptional; otherwise, <c>false</c>.
+            /// </summary>
+            public bool FinallyExceptionalTranslation;
+
+            /// <summary>
+            /// The instruction to route control flow after the endfinally block.
+            /// </summary>
+            public Instruction EndfinallyControlFlow;
         }
     }
 }
