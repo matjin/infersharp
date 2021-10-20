@@ -84,7 +84,6 @@ namespace Cilsil.Services
             }
 
             var programState = new ProgramState(method, Cfg);
-
             var methodBody = method.Body;
 
             // True if the translation terminates early, false otherwise.
@@ -173,9 +172,87 @@ namespace Cilsil.Services
                     programState.ProcDesc.ExitNode);
 
                 SetNodePredecessors(programState);
-
+                if (HasCycle(programState))
+                {
+                    //throw new Exception();
+                }
                 Cfg.Procs.Add(methodName, programState.ProcDesc);
             }
+        }
+
+        private static void ShouldHaveCycle(MethodDefinition method, Cfg cfg)
+        {
+            var location = new Location();
+            var state = new ProgramState(method, cfg);
+            var startNode = new StartNode(location);
+            var firstSuccessor = new StartNode(location);
+            var secSuccessor = new StartNode(location);
+            var containsCycle = false;
+
+            startNode.Successors.Add(firstSuccessor);
+            firstSuccessor.Successors.Add(secSuccessor);
+            secSuccessor.Successors.Add(startNode);
+
+            var unvisited = new HashSet<CfgNode>();
+            var greyNodes = new HashSet<CfgNode>();
+            unvisited.Add(startNode);
+            unvisited.Add(firstSuccessor);
+            unvisited.Add(secSuccessor);
+            Visit(startNode, unvisited, greyNodes, ref containsCycle);
+            var x = new Location();
+        }
+
+        private static bool HasCycle(ProgramState state)
+        {
+            var unvisited = new HashSet<CfgNode>();
+            foreach (var node in state.ProcDesc.Nodes)
+            {
+                unvisited.Add(node);
+            }
+            var greyNodes = new HashSet<CfgNode>();
+            var containsCycle = false;
+            var sourceNode = state.ProcDesc.StartNode;
+            unvisited.Remove(sourceNode);
+            while (unvisited.Count > 0)
+            {
+                Visit(sourceNode, unvisited, greyNodes, ref containsCycle);
+                if (unvisited.Count > 0)
+                {
+                    sourceNode = unvisited.ElementAt(0);
+                    unvisited.Remove(sourceNode);
+                }
+            }
+            return containsCycle;
+        }
+
+        private static void Visit(CfgNode node, HashSet<CfgNode> unvisited, HashSet<CfgNode> greyNodes, ref bool containsCycle)
+        {
+            greyNodes.Add(node);
+            foreach (var neighbor in node.Successors)
+            {
+                if (greyNodes.Contains(neighbor))
+                {
+                    var cycleContainsJoin = false;
+                    foreach (var greyNode in greyNodes)
+                    {
+                        if (greyNode is JoinNode)
+                        {
+                            cycleContainsJoin = true;
+                        }
+                    }
+                    if (!cycleContainsJoin)
+                    {
+                        containsCycle = true;
+                        //throw new Exception();
+                    }
+                }
+                if (unvisited.Contains(neighbor))
+                {
+                    unvisited.Remove(node);
+                    Visit(neighbor, unvisited, greyNodes, ref containsCycle);
+                }
+            }
+            greyNodes.Remove(node);
         }
 
         private static void SetNodePredecessors(ProgramState programState)
